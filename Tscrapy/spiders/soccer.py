@@ -1,4 +1,5 @@
 import scrapy
+from scrapy.crawler import CrawlerProcess
 import re
 
 ENGLAND_PREMIER_LEAGUE = 17
@@ -88,3 +89,13 @@ class SoccerSpider(scrapy.Spider):
                 print(day_index)
                 print(type)
                 print(time)
+
+
+
+process = CrawlerProcess({
+    'USER_AGENT': 'Mozilla/4.0 (compatible; MSIE 7.0; Windows NT 5.1)'
+})
+
+
+process.crawl(SoccerSpider)
+process.start() # the script will block here until the crawling is finished
