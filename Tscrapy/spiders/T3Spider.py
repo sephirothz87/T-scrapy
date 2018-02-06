@@ -68,7 +68,8 @@ class T3Spider(scrapy.Spider):
         #17-18  第7轮 哈德斯菲尔德vs热刺
         # tmp_url = 'http://www.okooo.com/soccer/match/954376/odds/change/14/'
         #17-18  第7轮 斯托克城vs南安普顿
-        tmp_url = 'http://www.okooo.com/soccer/match/954326/odds/change/14/'
+        # tmp_url = 'http://www.okooo.com/soccer/match/954326/odds/change/14/'
+        tmp_url = 'http://www.okooo.com/soccer/match/954326/odds/change/82/'
 
         headers = {
             'User-Agent': user_agent,
