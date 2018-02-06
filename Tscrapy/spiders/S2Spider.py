@@ -43,7 +43,7 @@ class S2Spider(scrapy.Spider):
     start_urls = ['http://www.baidu.com']
 
     def parse(self,response):
-        print('parse')
+        # print('parse')
 
         meta = {
             'match':{}
@@ -63,18 +63,16 @@ class S2Spider(scrapy.Spider):
                 'round':i
             })
 
-            print('Round %s' %(i))
+            # print('Round %s' %(i))
             yield Request(url=round_url,headers=headers,callback=self.parseRound,meta=meta)
 
 
     def parseRound(self, response):
-        print('parseRound')
+        # print('parseRound')
         matches = response.xpath('//*[@id="team_fight_table"]/tr')
-        # print(matches.extract())
 
-        # for i in range(2, match_per_turn + 2):
         for i in range(1, len(matches)):
-            print('Round:',response.meta['match']['round'],'Match:',i)
+            # print('Round:',response.meta['match']['round'],'Match:',i)
             # match = matches.xpath('tr[%s]' %(i))
             matchPath = matches[i]
             # print(match.extract())
@@ -95,18 +93,6 @@ class S2Spider(scrapy.Spider):
             else:
                 resultCode = 1
 
-            print(matchId)
-            print(startTime)
-            print(teamHome)
-            print(teamAway)
-            print(scoreText)
-            print(goalHome)
-            print(goalAway)
-            print()
-
-            # oddDetailUrl = 'http://www.okooo.com/soccer/match/%s/odds/' % (id)
-            # hoddDetailUrl = 'http://www.okooo.com/soccer/match/%s/hodds/' % (id)
-
             headers = {
                 'User-Agent': USER_AGENT,
                 'Connection': 'keep-alive',
@@ -114,19 +100,20 @@ class S2Spider(scrapy.Spider):
                 'Cookie': COOKIE
             }
 
-            meta = response.meta
+            meta = {}
 
-            meta.update({
+            meta={
                 'odd_l_group': False,
                 'odd_w_group': False,
                 'hodd_w_group': False
-            })
-            meta['match'].update({
+            }
+            meta['match']={
                 'matchId':matchId,
                 'leagueCode':leagueCode,
                 'leagueName':leagueName,
                 'seasonCode':seasonCode,
                 'seasonName':seasonName,
+                'round':response.meta['match']['round'],
                 'vsText':'%s %s %s' %(teamHome,scoreText,teamAway),
                 'matchIndex':i,
                 'startTime':startTime,
@@ -136,13 +123,7 @@ class S2Spider(scrapy.Spider):
                 'goalAway':goalAway,
                 'scoreText':scoreText,
                 'resultCode':resultCode
-            })
-
-            # meta = {
-            #     'round': response.meta['round'],
-            #     'match': i,
-            #     'vs': '%s %s %s' % (teamHome, scoreText, teamAway)
-            # }
+            }
 
             #获取立博详细赔率
             oddLadBrokesDetailUrl = 'http://www.okooo.com/soccer/match/%s/odds/change/%s/' %(matchId,LAD_BROKES)
@@ -151,11 +132,6 @@ class S2Spider(scrapy.Spider):
     def parseOddsDetail(self, response):
         print('parseOddsDetail')
         print('Round:', response.meta['match']['round'],'Match:', response.meta['match']['matchId'], response.meta['match']['vsText'])
-        # print(response)
-        # print(response.body)
-        # print(response.url)
-        # print()
-        # print(response.extract())
 
         meta = response.meta
         curOddGroup = {}
@@ -242,25 +218,6 @@ class S2Spider(scrapy.Spider):
         }
         curOddGroup['oddEnd'] = oddEndObj
 
-        print('==========final odds group==========')
-        print(finalOdd3)
-        print(finalOdd1)
-        print(finalOdd0)
-
-        print(finalProb3)
-        print(finalProb1)
-        print(finalProb0)
-
-        print(finalKellyW3)
-        print(finalKellyW1)
-        print(finalKellyW0)
-
-        print(finalKellyReg3)
-        print(finalKellyReg1)
-        print(finalKellyReg0)
-
-        print(finalReturnProb)
-
         startOdd = oddsTable.xpath('tr[last()]')
 
         startOddTime = startOdd.xpath('td[1]/text()').extract_first()
@@ -304,30 +261,12 @@ class S2Spider(scrapy.Spider):
         }
         curOddGroup['oddStartObj'] = oddStartObj
 
-        print('==========start odds group==========')
-        print(startOddTime)
-        print(startOddTimeSp)
-
-        print(startOdd3)
-        print(startOdd1)
-        print(startOdd0)
-
-        print(startProb3)
-        print(startProb1)
-        print(startProb0)
-
-        print(startKelly3)
-        print(startKelly1)
-        print(startKelly0)
-
-        print(startReturnProb)
-
         changeOdds = oddsTable.xpath('tr')
         oddChangeGroup = []
 
         loopEnd = len(changeOdds)-1+shift
         for i in range(4+shift,loopEnd):
-            print('==========one odds group==========')
+            # print('==========one odds group==========')
             tmpOdd = changeOdds[i]
 
             oddTime = tmpOdd.xpath('td[1]/text()').extract_first()
@@ -391,33 +330,6 @@ class S2Spider(scrapy.Spider):
                 'returnProb':returnProb
             })
 
-            print(oddTime)
-            print(oddTimeSp)
-
-            print(odd3)
-            print(reg3)
-
-            print(odd1)
-            print(reg1)
-
-            print(odd0)
-            print(reg0)
-
-            print(prob3)
-            print(prob1)
-            print(prob0)
-
-            print(kelly3)
-            print(kellyChangeW3)
-
-            print(kelly1)
-            print(kellyChangeW1)
-
-            print(kelly0)
-            print(kellyChangeW0)
-
-            print(returnProb)
-
         curOddGroup['oddChangeGroup'] = oddChangeGroup
         #mock
         # odd_group = ''
@@ -432,11 +344,6 @@ class S2Spider(scrapy.Spider):
             'Cookie': COOKIE
         }
 
-        # if not meta['odd_l_request']:
-        #     # 获取立博详细赔率
-        #     meta.update({'odd_l_request': True})
-        #     oddLadBrokesDetailUrl = 'http://www.okooo.com/soccer/match/%s/odds/change/%s/' % (meta['id'], LAD_BROKES)
-        #     yield scrapy.Request(url=oddLadBrokesDetailUrl, headers=headers, callback=self.parseOddsDetail, meta=meta)
         if not meta['odd_l_group']:
             #更新立博赔率数据到结果中
             # odd_group = 'mock odd_l_group'
