@@ -1,0 +1,206 @@
+第六轮	埃弗顿-伯恩茅斯
+http://www.okooo.com/soccer/match/954348/odds/change/14/
+Referer: http://www.okooo.com/soccer/match/954348/odds/
+
+在fiddler中修改了referer之后，取到了！！！！
+
+
+接下来试着在py里增加所有需要的头部参数
+
+通过fiddler抓包发现，修改的header根本没有被加入到请求头部
+
+
+
+//2018-2-6 14:14:43
+//diff后发现两者的请求头只差一个
+
+
+Referer: http://www.okooo.com/soccer/match/954344/odds/
+
+
+
+用python的话头部信息就差了许多了
+很可能不是cookie的事情
+
+再找一场比赛在fiddler里面修改请求头试试
+
+
+
+//用网站链接取   能取到
+
+1718赛季  第六轮	西汉姆联vs热刺
+
+
+GET http://www.okooo.com/soccer/match/954344/odds/change/14/ HTTP/1.1
+Host: www.okooo.com
+Connection: keep-alive
+Upgrade-Insecure-Requests: 1
+User-Agent: Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/63.0.3239.108 Safari/537.36
+Accept: text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,image/apng,*/*;q=0.8
+Referer: http://www.okooo.com/soccer/match/954344/odds/
+Accept-Encoding: gzip, deflate
+Accept-Language: zh-CN,zh;q=0.9,ja;q=0.8,en;q=0.7,zh-TW;q=0.6
+Cookie: LastUrl=; FirstOKURL=http%3A//www.okooo.com/jingcai/; First_Source=www.okooo.com; Last_Source=http%3A//www.okooo.com/soccer/match/876722/odds/; IMUserName=ok_025742692071; __utmz=56961525.1517821150.16.3.utmcsr=okooo.com|utmccn=(referral)|utmcmd=referral|utmcct=/jingcai/2018-02-03/; data_start_isShow=1; IMUserID=24006237; OkAutoUuid=b8b92c071a5ba1185c065aa6d9a2175b; OkMsIndex=5; __utmc=56961525; DRUPAL_LOGGED_IN=Y; isInvitePurview=0; PHPSESSID=f3438442d0a40ccd389ab57fc3e7620c9536b916; Hm_lvt_5ffc07c2ca2eda4cc1c4d8e50804c94b=1517120624,1517893507; __utma=56961525.95899878.1517120624.1517893506.1517895607.21; UWord=d451d8cd984f00b204e9800998ecf84127e; Hm_lpvt_5ffc07c2ca2eda4cc1c4d8e50804c94b=1517896077; __utmb=56961525.66.8.1517896134153
+
+
+<!-- 返回值 -->
+HTTP/1.1 200 OK
+Content-Type: text/html
+Connection: keep-alive
+Pragma: 
+Vary: Accept-Encoding
+Cache-Control: max-age=3600 ,must-revalidate
+Powered-By-ChinaCache: MISS from 391000g3gp.2
+Expires: Tue, 06 Feb 2018 07:02:46 GMT
+Set-Cookie: LStatus=deleted; expires=Mon, 06-Feb-2017 06:02:45 GMT; path=/; domain=.okooo.com
+Set-Cookie: LoginStr=deleted; expires=Mon, 06-Feb-2017 06:02:45 GMT; path=/; domain=.okooo.com
+Last-Modified: Tue, 06 Feb 2018 06:02:46 GMT
+Date: Tue, 06 Feb 2018 06:02:45 GMT
+X-Cache-Info: caching
+Server: Apache
+Connection: keep-alive
+CC_CACHE: TCP_REFRESH_MISS
+Content-Length: 38325
+
+内容省略
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+
+
+
+
+//2018-2-6 14:00:20
+直接浏览器取不到
+
+请求
+GET http://www.okooo.com/soccer/match/954344/odds/change/14/ HTTP/1.1
+Host: www.okooo.com
+Connection: keep-alive
+User-Agent: Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/63.0.3239.108 Safari/537.36
+Upgrade-Insecure-Requests: 1
+Accept: text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,image/apng,*/*;q=0.8
+Accept-Encoding: gzip, deflate
+Accept-Language: zh-CN,zh;q=0.9,ja;q=0.8,en;q=0.7,zh-TW;q=0.6
+Cookie: LastUrl=; FirstOKURL=http%3A//www.okooo.com/jingcai/; First_Source=www.okooo.com; Last_Source=http%3A//www.okooo.com/soccer/match/876722/odds/; IMUserName=ok_025742692071; __utmz=56961525.1517821150.16.3.utmcsr=okooo.com|utmccn=(referral)|utmcmd=referral|utmcct=/jingcai/2018-02-03/; data_start_isShow=1; IMUserID=24006237; OkAutoUuid=b8b92c071a5ba1185c065aa6d9a2175b; OkMsIndex=5; __utmc=56961525; DRUPAL_LOGGED_IN=Y; isInvitePurview=0; PHPSESSID=f3438442d0a40ccd389ab57fc3e7620c9536b916; Hm_lvt_5ffc07c2ca2eda4cc1c4d8e50804c94b=1517120624,1517893507; __utma=56961525.95899878.1517120624.1517893506.1517895607.21; UWord=d451d8cd984f00b204e9800998ecf84127e; Hm_lpvt_5ffc07c2ca2eda4cc1c4d8e50804c94b=1517896077; __utmb=56961525.66.8.1517896134153
+
+
+返回
+HTTP/1.1 404 Not Found
+Server: nginx
+Content-Type: text/html
+Connection: keep-alive
+Content-Length: 12
+Date: Tue, 06 Feb 2018 06:00:38 GMT
+Powered-By-ChinaCache: MISS from 391000g3gd.1
+Connection: keep-alive
+
+Not Found CC
+
+
+//2018-2-6 13:57:14
+直接py取取不到
+
+请求
+GET http://www.okooo.com/soccer/match/954344/odds/change/14/ HTTP/1.1
+Accept: text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8
+Accept-Language: en
+User-Agent: Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/63.0.3239.108 Safari/537.36
+Accept-Encoding: gzip,deflate
+Host: www.okooo.com
+
+
+This request did not send any cookie data.
+
+
+
+HTTP/1.1 404 Not Found
+Server: nginx
+Content-Type: text/html
+Connection: keep-alive
+Content-Length: 12
+Date: Tue, 06 Feb 2018 05:57:24 GMT
+Powered-By-ChinaCache: MISS from 391000g3gd.1
+Connection: keep-alive
+
+Not Found CC
+
+
+
+This response did not set any cookies.
+This response did not contain a P3P Header.
+
+Validate P3P Policies at: http://www.w3.org/P3P/validator.html
+Learn more at: http://www.fiddler2.com/r/?id=p3pinfo
+
+
+
+//2018-2-6 13:42:00
+请求赔率变化数据发生404
+
+Request URL:http://www.okooo.com/soccer/match/954344/odds/change/82/
+Request Method:GET
+Status Code:404 Not Found
+Remote Address:61.180.227.172:80
+Referrer Policy:no-referrer-when-downgrade
+Response Headers
+view source
+Connection:keep-alive
+Connection:keep-alive
+Content-Length:12
+Content-Type:text/html
+Date:Tue, 06 Feb 2018 05:41:46 GMT
+Powered-By-ChinaCache:MISS from 391000g3gp.3
+Server:nginx
+Request Headers
+view source
+Accept:text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,image/apng,*/*;q=0.8
+Accept-Encoding:gzip, deflate
+Accept-Language:zh-CN,zh;q=0.9,ja;q=0.8,en;q=0.7,zh-TW;q=0.6
+Cache-Control:no-cache
+Connection:keep-alive
+Cookie:LastUrl=; FirstOKURL=http%3A//www.okooo.com/jingcai/; First_Source=www.okooo.com; Last_Source=http%3A//www.okooo.com/soccer/match/876722/odds/; IMUserName=ok_025742692071; __utmz=56961525.1517821150.16.3.utmcsr=okooo.com|utmccn=(referral)|utmcmd=referral|utmcct=/jingcai/2018-02-03/; data_start_isShow=1; IMUserID=24006237; OkAutoUuid=b8b92c071a5ba1185c065aa6d9a2175b; OkMsIndex=5; __utmc=56961525; DRUPAL_LOGGED_IN=Y; isInvitePurview=0; PHPSESSID=f3438442d0a40ccd389ab57fc3e7620c9536b916; Hm_lvt_5ffc07c2ca2eda4cc1c4d8e50804c94b=1517120624,1517893507; __utma=56961525.95899878.1517120624.1517893506.1517895607.21; Hm_lpvt_5ffc07c2ca2eda4cc1c4d8e50804c94b=1517895608; UWord=d451d8cd984f00b204e9800998ecf84127e; __utmb=56961525.6.8.1517895623836
+Host:www.okooo.com
+Pragma:no-cache
+Upgrade-Insecure-Requests:1
+User-Agent:Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/63.0.3239.108 Safari/537.36
+
+
+
+2018-2-6 13:48:36
+请求成功的时候
+
+Request URL:http://www.okooo.com/soccer/match/954344/odds/change/82/
+Request Method:GET
+Status Code:200 OK
+Remote Address:61.180.227.172:80
+Referrer Policy:no-referrer-when-downgrade
+Response Headers
+view source
+Cache-Control:max-age=3600 ,must-revalidate
+CC_CACHE:TCP_REFRESH_MISS
+Connection:keep-alive
+Connection:keep-alive
+Content-Encoding:gzip
+Content-Type:text/html
+Date:Tue, 06 Feb 2018 05:48:47 GMT
+Expires:Tue, 06 Feb 2018 06:48:38 GMT
+Last-Modified:Tue, 06 Feb 2018 05:48:38 GMT
+Powered-By-ChinaCache:MISS from 391000g3gp.3
+Pragma:
+Server:Apache
+Transfer-Encoding:chunked
+Vary:Accept-Encoding
+X-Cache-Info:cached
+Request Headers
+view source
+Accept:text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,image/apng,*/*;q=0.8
+Accept-Encoding:gzip, deflate
+Accept-Language:zh-CN,zh;q=0.9,ja;q=0.8,en;q=0.7,zh-TW;q=0.6
+Cache-Control:no-cache
+Connection:keep-alive
+Cookie:LastUrl=; FirstOKURL=http%3A//www.okooo.com/jingcai/; First_Source=www.okooo.com; Last_Source=http%3A//www.okooo.com/soccer/match/876722/odds/; IMUserName=ok_025742692071; __utmz=56961525.1517821150.16.3.utmcsr=okooo.com|utmccn=(referral)|utmcmd=referral|utmcct=/jingcai/2018-02-03/; data_start_isShow=1; IMUserID=24006237; OkAutoUuid=b8b92c071a5ba1185c065aa6d9a2175b; OkMsIndex=5; __utmc=56961525; DRUPAL_LOGGED_IN=Y; isInvitePurview=0; PHPSESSID=f3438442d0a40ccd389ab57fc3e7620c9536b916; Hm_lvt_5ffc07c2ca2eda4cc1c4d8e50804c94b=1517120624,1517893507; __utma=56961525.95899878.1517120624.1517893506.1517895607.21; UWord=d451d8cd984f00b204e9800998ecf84127e; Hm_lpvt_5ffc07c2ca2eda4cc1c4d8e50804c94b=1517896077; __utmb=56961525.60.8.1517896087684
+Host:www.okooo.com
+Pragma:no-cache
+Referer:http://www.okooo.com/soccer/match/954344/odds/
+Upgrade-Insecure-Requests:1
+User-Agent:Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/63.0.3239.108 Safari/537.36

@@ -1,5 +1,6 @@
 import scrapy
 from scrapy.crawler import CrawlerProcess
+from scrapy.http import Request,HtmlResponse
 import re
 
 # 按照联赛-轮次-球队查询比赛基本信息
@@ -37,7 +38,7 @@ def exChangeTime(str):
     reg = r'\D*(\d+)\D+(\d+)\D+'
     return re.sub(reg,r'\1:\2',str)
 
-class T2Spider(scrapy.Spider):
+class T3Spider(scrapy.Spider):
     name = 'T2Spider'
     # start_urls = ['http://www.okooo.com/soccer/match/954300/odds/']
     # start_urls = ['http://www.okooo.com/soccer/match/954348/odds/change/14/']
@@ -45,18 +46,41 @@ class T2Spider(scrapy.Spider):
     # start_urls = ['http://www.okooo.com/soccer/match/954344/odds/change/82/']
     # start_urls = ['http://www.okooo.com/soccer/match/954344/hodds/change/14/?boundary=1']
 
-    headers = {
-        'User-Agent':user_agent,
-        'Connection':'keep-alive',
-        'Referer':'http://www.okooo.com/soccer/match/954378/',
-        'Cookie':cookie
-    }
 
+    # headers = {
+    #     'User-Agent': user_agent,
+    #     'Connection': 'keep-alive',
+    #     'Referer': 'http://www.okooo.com/soccer/match/954378/',
+    #     'Cookie': cookie
+    # }
+
+
+    start_urls = ['https://www.baidu.com']
     #17-18  第6轮 布莱顿vs纽卡
-    start_urls = ['http://www.okooo.com/soccer/match/954378/odds/change/14/']
+    # start_urls = ['http://www.okooo.com/soccer/match/954378/odds/change/14/']
+    #17-18  第7轮 哈德斯菲尔德vs热刺
+    # start_urls = ['http://www.okooo.com/soccer/match/954376/odds/change/14/']
 
-    def parse(self, response):
+
+    def parse(self,response):
         print('parse')
+
+        #17-18  第7轮 哈德斯菲尔德vs热刺
+        # tmp_url = 'http://www.okooo.com/soccer/match/954376/odds/change/14/'
+        #17-18  第7轮 斯托克城vs南安普顿
+        tmp_url = 'http://www.okooo.com/soccer/match/954326/odds/change/14/'
+
+        headers = {
+            'User-Agent': user_agent,
+            'Connection': 'keep-alive',
+            'Referer': 'http://www.okooo.com/soccer/match/954378/',
+            'Cookie': cookie
+        }
+
+        yield Request(url=tmp_url,headers=headers,callback=self.parseOddsDetail)
+
+    def parseOddsDetail(self, response):
+        print('parseOddsDetail')
         print(response)
         print(response.body)
         print(response.url)
@@ -243,5 +267,5 @@ process = CrawlerProcess({
     'USER_AGENT': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/63.0.3239.108 Safari/537.36'
 })
 
-process.crawl(T2Spider)
+process.crawl(T3Spider)
 process.start()  # the script will block here until the crawling is finished
