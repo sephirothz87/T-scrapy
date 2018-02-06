@@ -2,6 +2,7 @@ import scrapy
 from scrapy.crawler import CrawlerProcess
 from scrapy.http import Request,HtmlResponse
 import re
+import time
 
 # 按照联赛-轮次-球队查询比赛基本信息
 
@@ -9,8 +10,8 @@ ENGLAND_PREMIER_LEAGUE_CODE = 17
 ENGLAND_PREMIER_LEAGUE_NAME = '英超'
 ENGLAND_PREMIER_LEAGUE_MATCH_PER_TURN = 10
 SEASON_ENGLAND_PREMIER_LEAGUE_17_18 = 13222
-# TOTAL_ROUND = 26
-TOTAL_ROUND = 1
+TOTAL_ROUND = 26
+# TOTAL_ROUND = 1
 
 # 博彩公司代号
 WILLIAM_HILL = 14
@@ -25,6 +26,8 @@ leagueName = ENGLAND_PREMIER_LEAGUE_NAME
 seasonCode = SEASON_ENGLAND_PREMIER_LEAGUE_17_18
 seasonName = '17-18'
 # match_per_turn = 10
+
+resultData = []
 
 def calChange(str):
     if str.endswith('↑'):
@@ -130,8 +133,8 @@ class S2Spider(scrapy.Spider):
             yield scrapy.Request(url=oddLadBrokesDetailUrl,headers=headers,callback=self.parseOddsDetail,meta=meta)
 
     def parseOddsDetail(self, response):
-        print('parseOddsDetail')
-        print('Round:', response.meta['match']['round'],'Match:', response.meta['match']['matchId'], response.meta['match']['vsText'])
+        # print('parseOddsDetail')
+        # print('Round:', response.meta['match']['round'],'Match:', response.meta['match']['matchId'], response.meta['match']['vsText'])
 
         meta = response.meta
         curOddGroup = {}
@@ -353,7 +356,7 @@ class S2Spider(scrapy.Spider):
             # })
 
             meta['odd_l_group'] = True
-            meta['match']['oddChangeGroupLadBrode'] = curOddGroup
+            meta['match']['oddChangeGroupLadBrokes'] = curOddGroup
 
             hoddNum='-1'
             if float(startOdd3)>float(startOdd0):
@@ -386,7 +389,7 @@ class S2Spider(scrapy.Spider):
                 'kellyReg3':finalKellyReg3,
                 'kellyReg1':finalKellyReg1,
                 'kellyReg0':finalKellyReg0,
-                'returnProbLabBrokes':finalReturnProb,
+                'returnProbLadBrokes':finalReturnProb,
                 'oddStartLadBrokes3': startOdd3,
                 'oddStartLadBrokes1': startOdd1,
                 'oddStartLadBrokes0': startOdd0,
@@ -403,7 +406,7 @@ class S2Spider(scrapy.Spider):
             # meta.update({'odd_w_group': odd_group})
 
             meta['odd_w_group'] = True
-            meta['match']['oddChangeGroupLadBrode'] = curOddGroup
+            meta['match']['oddChangeGroupWillamHill'] = curOddGroup
 
             hoddWilliamHillDetailUrl = 'http://www.okooo.com/soccer/match/%s/hodds/change/%s/?boundary=%s' % (meta['match']['matchId'], WILLIAM_HILL, meta['match']['hoddNum'])
 
@@ -423,6 +426,7 @@ class S2Spider(scrapy.Spider):
             })
             # print(meta)
             print(meta['match'])
+            resultData.append(meta['match'])
 
 process = CrawlerProcess({
     'USER_AGENT': USER_AGENT
@@ -430,3 +434,32 @@ process = CrawlerProcess({
 
 process.crawl(S2Spider)
 process.start()  # the script will block here until the crawling is finished
+
+# print(resultData)
+# print(type(resultData))
+# print(resultData[0])
+# print(resultData[0].values())
+# ssss = ','.join(map(str,resultData[0].values()))
+# print(ssss)
+
+# resultCsvFile = '../report/'+time.strftime("%Y-%m-%d-%H%M%S", time.localtime())+'.csv'
+resultCsvFile = time.strftime("%Y-%m-%d-%H%M%S", time.localtime())+'.csv'
+print(resultCsvFile)
+
+def single(value):
+    value = str(value)
+    if value.startswith('{'):
+        return '"'+value+'"'
+    else:
+        return value
+
+def writeCsv(fileName,matchObj):
+    f = open(fileName,'a')
+    line = ','.join(map(single,matchObj.values()))
+
+    f.write(line)
+    f.write('\n')
+    f.close()
+
+for matchData in resultData:
+    writeCsv(resultCsvFile,matchData)
