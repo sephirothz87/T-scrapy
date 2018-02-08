@@ -6,16 +6,20 @@ import time
 
 # 按照联赛-轮次-球队查询比赛基本信息
 
+#常量
 ENGLAND_PREMIER_LEAGUE_CODE = 17
 ENGLAND_PREMIER_LEAGUE_NAME = '英超'
 ENGLAND_PREMIER_LEAGUE_MATCH_PER_TURN = 10
 SEASON_ENGLAND_PREMIER_LEAGUE_17_18 = 13222
-TOTAL_ROUND = 26
+SEASON_ENGLAND_PREMIER_LEAGUE_16_17 = 12651
+TOTAL_ROUND = 38#赛季轮次总数
 # TOTAL_ROUND = 1
 
 # 博彩公司代号
 WILLIAM_HILL = 14
 LAD_BROKES = 82
+
+
 
 USER_AGENT = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/63.0.3239.108 Safari/537.36'
 #如果获取失败，重新去网站刷新一下cookie
@@ -23,9 +27,16 @@ COOKIE = '__utmc=56961525; LastUrl=; FirstOKURL=http%3A//www.okooo.com/jingcai/;
 
 leagueCode = ENGLAND_PREMIER_LEAGUE_CODE
 leagueName = ENGLAND_PREMIER_LEAGUE_NAME
-seasonCode = SEASON_ENGLAND_PREMIER_LEAGUE_17_18
-seasonName = '17-18'
-# match_per_turn = 10
+seasonCode = SEASON_ENGLAND_PREMIER_LEAGUE_16_17
+seasonName = '16-17'
+#想取多少轮数据
+roundWantget = TOTAL_ROUND
+# roundWantget = 26
+# roundWantget = 1
+#从第几轮开始取
+roundWantStart = 1
+#是否取详细的赔率变化
+isGetDetailOddChange = False
 
 resultData = []
 
@@ -48,11 +59,7 @@ class S2Spider(scrapy.Spider):
     def parse(self,response):
         # print('parse')
 
-        meta = {
-            'match':{}
-        }
-
-        for i in range(1,TOTAL_ROUND+1):
+        for i in range(roundWantStart,roundWantget+1):
             round_url = 'http://www.okooo.com/soccer/league/%s/schedule/%s/1-1-%s/' %(leagueCode, seasonCode, i)
 
             headers = {
@@ -60,6 +67,10 @@ class S2Spider(scrapy.Spider):
                 'Connection': 'keep-alive',
                 'Referer': round_url,
                 'Cookie': COOKIE
+            }
+
+            meta = {
+                'match':{}
             }
 
             meta['match'].update({
@@ -72,6 +83,9 @@ class S2Spider(scrapy.Spider):
 
     def parseRound(self, response):
         # print('parseRound')
+        roundIndex = response.meta['match']['round']
+        print(roundIndex)
+        print(type(roundIndex))
         matches = response.xpath('//*[@id="team_fight_table"]/tr')
 
         for i in range(1, len(matches)):
@@ -116,7 +130,7 @@ class S2Spider(scrapy.Spider):
                 'leagueName':leagueName,
                 'seasonCode':seasonCode,
                 'seasonName':seasonName,
-                'round':response.meta['match']['round'],
+                'round':roundIndex,
                 'vsText':'%s %s %s' %(teamHome,scoreText,teamAway),
                 'matchIndex':i,
                 'startTime':startTime,
@@ -162,6 +176,7 @@ class S2Spider(scrapy.Spider):
         finalOdd = oddsTable.xpath('tr[%s]' %(3+shift))
 
         finalOddTime = finalOdd.xpath('td[1]/text()').extract_first()
+        finalOddTime = finalOddTime[:len(finalOddTime)-3]
 
         finalOddTimeSp = exChangeTime(finalOdd.xpath('td[2]/text()').extract_first())
 
@@ -264,81 +279,83 @@ class S2Spider(scrapy.Spider):
         }
         curOddGroup['oddStartObj'] = oddStartObj
 
-        changeOdds = oddsTable.xpath('tr')
-        oddChangeGroup = []
 
-        loopEnd = len(changeOdds)-1+shift
-        for i in range(4+shift,loopEnd):
-            # print('==========one odds group==========')
-            tmpOdd = changeOdds[i]
+        if isGetDetailOddChange:
+            changeOdds = oddsTable.xpath('tr')
+            oddChangeGroup = []
 
-            oddTime = tmpOdd.xpath('td[1]/text()').extract_first()
-            oddTimeSp = exChangeTime(tmpOdd.xpath('td[2]/text()').extract_first())
+            loopEnd = len(changeOdds)-1+shift
+            for i in range(4+shift,loopEnd):
+                # print('==========one odds group==========')
+                tmpOdd = changeOdds[i]
 
-            odd3 = tmpOdd.xpath('td[%s]/span/text()' %(3+shift)).extract_first()
-            odd1 = tmpOdd.xpath('td[%s]/span/text()' %(4+shift)).extract_first()
-            odd0 = tmpOdd.xpath('td[%s]/span/text()' %(5+shift)).extract_first()
+                oddTime = tmpOdd.xpath('td[1]/text()').extract_first()
+                oddTimeSp = exChangeTime(tmpOdd.xpath('td[2]/text()').extract_first())
 
-            reg3 = 0
-            reg3 = 0
-            reg0 = 0
+                odd3 = tmpOdd.xpath('td[%s]/span/text()' %(3+shift)).extract_first()
+                odd1 = tmpOdd.xpath('td[%s]/span/text()' %(4+shift)).extract_first()
+                odd0 = tmpOdd.xpath('td[%s]/span/text()' %(5+shift)).extract_first()
 
-            if not odd3:
-                odd3 = tmpOdd.xpath('td[%s]/text()' %(3+shift)).extract_first()
-            if not odd1:
-                odd1 = tmpOdd.xpath('td[%s]/text()' %(4+shift)).extract_first()
-            if not odd0:
-                odd0 = tmpOdd.xpath('td[%s]/text()' %(5+shift)).extract_first()
+                reg3 = 0
+                reg3 = 0
+                reg0 = 0
 
-            reg3 = calChange(odd3)
-            reg1 = calChange(odd1)
-            reg0 = calChange(odd0)
-            odd3 = odd3[0:4]
-            odd1 = odd1[0:4]
-            odd0 = odd0[0:4]
+                if not odd3:
+                    odd3 = tmpOdd.xpath('td[%s]/text()' %(3+shift)).extract_first()
+                if not odd1:
+                    odd1 = tmpOdd.xpath('td[%s]/text()' %(4+shift)).extract_first()
+                if not odd0:
+                    odd0 = tmpOdd.xpath('td[%s]/text()' %(5+shift)).extract_first()
 
-            prob3 = tmpOdd.xpath('td[%s]/text()' %(6+shift)).extract_first()
-            prob1 = tmpOdd.xpath('td[%s]/text()' %(7+shift)).extract_first()
-            prob0 = tmpOdd.xpath('td[%s]/text()' %(8+shift)).extract_first()
+                reg3 = calChange(odd3)
+                reg1 = calChange(odd1)
+                reg0 = calChange(odd0)
+                odd3 = odd3[0:4]
+                odd1 = odd1[0:4]
+                odd0 = odd0[0:4]
 
-            kelly3 = tmpOdd.xpath('td[%s]/text()' %(9+shift)).extract_first()
-            kelly1 = tmpOdd.xpath('td[%s]/text()' %(10+shift)).extract_first()
-            kelly0 = tmpOdd.xpath('td[%s]/text()' %(11+shift)).extract_first()
+                prob3 = tmpOdd.xpath('td[%s]/text()' %(6+shift)).extract_first()
+                prob1 = tmpOdd.xpath('td[%s]/text()' %(7+shift)).extract_first()
+                prob0 = tmpOdd.xpath('td[%s]/text()' %(8+shift)).extract_first()
 
-            kellyChangeW3 = 0
-            kellyChangeW1 = 0
-            kellyChangeW0 = 0
+                kelly3 = tmpOdd.xpath('td[%s]/text()' %(9+shift)).extract_first()
+                kelly1 = tmpOdd.xpath('td[%s]/text()' %(10+shift)).extract_first()
+                kelly0 = tmpOdd.xpath('td[%s]/text()' %(11+shift)).extract_first()
 
-            returnProb = tmpOdd.xpath('td[%s]/text()' %(12+shift)).extract_first()
+                kellyChangeW3 = 0
+                kellyChangeW1 = 0
+                kellyChangeW0 = 0
 
-            oddChangeGroup.append({
-                'hoddNum':tmpHoddNum,
-                'time':oddTime,
-                'timeSp':oddTimeSp,
-                'odd3':odd3,
-                'odd1':odd1,
-                'odd0':odd0,
-                'reg3':reg3,
-                'reg1':reg1,
-                'reg0':reg0,
-                'prob3':prob3,
-                'prob1':prob1,
-                'prob0':prob0,
-                'kelly3':kelly3,
-                'kelly1':kelly1,
-                'kelly0':kelly0,
-                'kellyReg3':0,
-                'kellyReg1':0,
-                'kellyReg0':0,
-                'returnProb':returnProb
-            })
+                returnProb = tmpOdd.xpath('td[%s]/text()' %(12+shift)).extract_first()
 
-        curOddGroup['oddChangeGroup'] = oddChangeGroup
-        #mock
-        # odd_group = ''
-        # odd_group = {
-        #
-        # }
+                oddChangeGroup.append({
+                    'hoddNum':tmpHoddNum,
+                    'time':oddTime,
+                    'timeSp':oddTimeSp,
+                    'odd3':odd3,
+                    'odd1':odd1,
+                    'odd0':odd0,
+                    'reg3':reg3,
+                    'reg1':reg1,
+                    'reg0':reg0,
+                    'prob3':prob3,
+                    'prob1':prob1,
+                    'prob0':prob0,
+                    'kelly3':kelly3,
+                    'kelly1':kelly1,
+                    'kelly0':kelly0,
+                    'kellyReg3':0,
+                    'kellyReg1':0,
+                    'kellyReg0':0,
+                    'returnProb':returnProb
+                })
+
+            curOddGroup['oddChangeGroup'] = oddChangeGroup
+            #mock
+            # odd_group = ''
+            # odd_group = {
+            #
+            # }
 
         headers = {
             'User-Agent': USER_AGENT,
@@ -356,7 +373,9 @@ class S2Spider(scrapy.Spider):
             # })
 
             meta['odd_l_group'] = True
-            meta['match']['oddChangeGroupLadBrokes'] = curOddGroup
+
+            if isGetDetailOddChange:
+                meta['match']['oddChangeGroupLadBrokes'] = curOddGroup
 
             hoddNum='-1'
             if float(startOdd3)>float(startOdd0):
@@ -375,6 +394,7 @@ class S2Spider(scrapy.Spider):
                 hResultCode = 1
 
             meta['match'].update({
+                'startTime': finalOddTime,
                 'hResultCode':hResultCode,
                 'hoddNum':hoddNum,
                 'oddFinalLadBrokes3':finalOdd3,
@@ -406,7 +426,9 @@ class S2Spider(scrapy.Spider):
             # meta.update({'odd_w_group': odd_group})
 
             meta['odd_w_group'] = True
-            meta['match']['oddChangeGroupWillamHill'] = curOddGroup
+
+            if isGetDetailOddChange:
+                meta['match']['oddChangeGroupWillamHill'] = curOddGroup
 
             hoddWilliamHillDetailUrl = 'http://www.okooo.com/soccer/match/%s/hodds/change/%s/?boundary=%s' % (meta['match']['matchId'], WILLIAM_HILL, meta['match']['hoddNum'])
 
@@ -418,7 +440,10 @@ class S2Spider(scrapy.Spider):
             # meta.update({'hodd_w_group': odd_group})
 
             meta['hodd_w_group'] = True
-            meta['match']['hoddChangeGroupWillamHill'] = curOddGroup
+
+            if isGetDetailOddChange:
+                meta['match']['hoddChangeGroupWillamHill'] = curOddGroup
+
             meta['match'].update({
                 'hoddWillamHill3':finalOdd3,
                 'hoddWillamHill1':finalOdd1,
@@ -442,8 +467,8 @@ process.start()  # the script will block here until the crawling is finished
 # ssss = ','.join(map(str,resultData[0].values()))
 # print(ssss)
 
-# resultCsvFile = '../report/'+time.strftime("%Y-%m-%d-%H%M%S", time.localtime())+'.csv'
-resultCsvFile = time.strftime("%Y-%m-%d-%H%M%S", time.localtime())+'.csv'
+resultCsvFile = '../../report/'+time.strftime("%Y-%m-%d-%H%M%S", time.localtime())+'.csv'
+# resultCsvFile = time.strftime("%Y-%m-%d-%H%M%S", time.localtime())+'.csv'
 print(resultCsvFile)
 
 def single(value):
@@ -453,6 +478,10 @@ def single(value):
     else:
         return value
 
+#简单粗暴的直接把所有的value写入
+#由于excel最大单元格限制为32767，而赔率变化丰富的比赛可能超过这一数值
+#鉴于目前还用不到这些值，加了一个开关控制，打开开关时，可能某些单元格会因为过长而出现错误
+#很容易查到，如果真的需要可以先手动修改一下
 def writeCsv(fileName,matchObj):
     f = open(fileName,'a')
     line = ','.join(map(single,matchObj.values()))
