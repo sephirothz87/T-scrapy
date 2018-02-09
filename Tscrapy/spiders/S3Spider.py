@@ -25,17 +25,17 @@ league = su.LEAGUE['ENGLAND_PREMIER_LEAGUE']
 leagueCode = league['code']
 leagueName = league['name']
 
-# seasonName = '17-18'
-seasonName = '16-17'
+seasonName = '17-18'
+# seasonName = '16-17'
 seasonCode = league['season_codes'][seasonName]
 
 # 想取多少轮数据
 # roundWantget = league['round']
-# roundWantget = 26
-roundWantget = 1
+roundWantget = 26
+# roundWantget = 1
 
 # 从第几轮开始取
-roundWantStart = 12
+roundWantStart = 1
 
 # 设置日志级别
 logging.basicConfig(level=logging.DEBUG)
@@ -253,7 +253,9 @@ class S3Spider(scrapy.Spider):
         meta = response.meta
         # i('Round: %s Match: %s %s' % (meta['match']['round'], meta['match']['matchId'], meta['match']['vsText']))
 
-        # startTime = response.xpath('/html/body/div[4]/div[4]/div[1]/div/div[2]/p[1]')
+        # # startTime = response.xpath('body/div[4]/div[4]/div[1]/div/div[2]/p[1]/text()')
+        # startTime = response.xpath('//div[@class="qbx_2"]')
+        # # startTime = response.xpath('//div[@class="qbx_2"]/p[1]/text()')
         # d(startTime)
 
         # oddLine = response.xpath('//*[@id="tr82"]')
@@ -392,9 +394,45 @@ class S3Spider(scrapy.Spider):
         else:
             w('no hodd found')
 
+        #最后再去取一下精确时间
+        match_url = 'http://www.okooo.com/soccer/match/%s/odds/' % (meta['match']['matchId'])
+        round_url = 'http://www.okooo.com/soccer/league/%s/schedule/%s/1-1-%s/' % (leagueCode, seasonCode, i)
+
+        headers = {
+            'User-Agent': userAgent,
+            'Connection': 'keep-alive',
+            'Referer': round_url,
+            'Cookie': cookie
+        }
+
+        yield scrapy.Request(url=match_url, headers=headers, cookies=cookie, callback=self.parserTime, meta=meta)
+
+    def parserTime(self, response):
+        d('parserTime')
+
+        meta = response.meta
+
+        # startTime = response.xpath('body/div[4]/div[4]/div[1]/div/div[2]/p[1]/text()').extract_first()
+        # startTime = response.xpath('/html/body/div[4]/div[4]/div[1]/div/div[2]/p[1]')
+        # startTime = response.xpath('//div[@class="qbx_2"]')
+        startTime = response.xpath('//div[@class="qbx_2"]/p[1]/text()').extract_first()
+        startTime = " ".join(startTime.split())#截去中间夹的\xa0 空格符&npsp
+        print(startTime)
+        # startTime.replace('\\xa0','')
+
+        # sel = Selector(response)
+        # startTime = sel.xpath('body')
+        # startTime = sel.xpath('body/div[4]/div[4]/div[1]/div/div[2]/p[1]/text()')
+        # startTime = sel.xpath('body/div[@class="qbx_2"]')
+
+        d(startTime)
+
+        meta['match'].update({
+            'startTime': startTime
+        })
+
         print(meta['match'])
         resultData.append(meta['match'])
-
 
 process = CrawlerProcess({
     'USER_AGENT': su.USER_AGENT
