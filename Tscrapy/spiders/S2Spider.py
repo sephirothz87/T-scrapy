@@ -88,17 +88,25 @@ class S2Spider(scrapy.Spider):
         print(type(roundIndex))
         matches = response.xpath('//*[@id="team_fight_table"]/tr')
 
+        matchIndex = 0
         for i in range(1, len(matches)):
             # print('Round:',response.meta['match']['round'],'Match:',i)
             # match = matches.xpath('tr[%s]' %(i))
             matchPath = matches[i]
             # print(match.extract())
 
+            scoreText = matchPath.xpath('td[4]/a/strong/text()').extract_first()
+
+            #延期比赛会当做一场全新的比赛来看待
+            if scoreText == '延期':
+                continue
+
+
+
             matchId = matchPath.xpath('@matchid').extract_first()
             startTime = matchPath.xpath('td[1]/text()').extract_first()
             teamHome = matchPath.xpath('td[3]/text()').extract_first()
             teamAway = matchPath.xpath('td[5]/text()').extract_first().strip()
-            scoreText = matchPath.xpath('td[4]/a/strong/text()').extract_first()
             goalHome = int(scoreText.split('-')[0])
             goalAway = int(scoreText.split('-')[1])
 
@@ -122,8 +130,10 @@ class S2Spider(scrapy.Spider):
             meta={
                 'odd_l_group': False,
                 'odd_w_group': False,
+                'hodd_l_group': False,
                 'hodd_w_group': False
             }
+            matchIndex+=1
             meta['match']={
                 'matchId':matchId,
                 'leagueCode':leagueCode,
@@ -132,7 +142,7 @@ class S2Spider(scrapy.Spider):
                 'seasonName':seasonName,
                 'round':roundIndex,
                 'vsText':'%s %s %s' %(teamHome,scoreText,teamAway),
-                'matchIndex':i,
+                'matchIndex':matchIndex,
                 'startTime':startTime,
                 'teamHome':teamHome,
                 'teamAway':teamAway,
@@ -176,186 +186,190 @@ class S2Spider(scrapy.Spider):
         finalOdd = oddsTable.xpath('tr[%s]' %(3+shift))
 
         finalOddTime = finalOdd.xpath('td[1]/text()').extract_first()
-        finalOddTime = finalOddTime[:len(finalOddTime)-3]
 
-        finalOddTimeSp = exChangeTime(finalOdd.xpath('td[2]/text()').extract_first())
+        #解决可能不存在让球赔率的问题
+        #也可能有其他可能没取到赔率，任何无效页面都会体现在这个判断里
+        if finalOddTime != None:
+            finalOddTime = finalOddTime[:len(finalOddTime)-3]
 
-        finalOdd3 = finalOdd.xpath('td[%s]/text()' %(3+shift)).extract_first()
-        finalOdd1 = finalOdd.xpath('td[%s]/text()' %(4+shift)).extract_first()
-        finalOdd0 = finalOdd.xpath('td[%s]/text()' %(5+shift)).extract_first()
+            finalOddTimeSp = exChangeTime(finalOdd.xpath('td[2]/text()').extract_first())
 
-        finalProb3 = finalOdd.xpath('td[%s]/text()' %(6+shift)).extract_first()
-        finalProb1 = finalOdd.xpath('td[%s]/text()' %(7+shift)).extract_first()
-        finalProb0 = finalOdd.xpath('td[%s]/text()' %(8+shift)).extract_first()
+            finalOdd3 = finalOdd.xpath('td[%s]/text()' %(3+shift)).extract_first()
+            finalOdd1 = finalOdd.xpath('td[%s]/text()' %(4+shift)).extract_first()
+            finalOdd0 = finalOdd.xpath('td[%s]/text()' %(5+shift)).extract_first()
 
-        finalKellyW3 = finalOdd.xpath('td[%s]/span/text()' %(9+shift)).extract_first()
-        finalKellyW1 = finalOdd.xpath('td[%s]/span/text()' %(10+shift)).extract_first()
-        finalKellyW0 = finalOdd.xpath('td[%s]/span/text()' %(11+shift)).extract_first()
+            finalProb3 = finalOdd.xpath('td[%s]/text()' %(6+shift)).extract_first()
+            finalProb1 = finalOdd.xpath('td[%s]/text()' %(7+shift)).extract_first()
+            finalProb0 = finalOdd.xpath('td[%s]/text()' %(8+shift)).extract_first()
 
-        finalKellyReg3 = 0
-        finalKellyReg1 = 0
-        finalKellyReg0 = 0
+            finalKellyW3 = finalOdd.xpath('td[%s]/span/text()' %(9+shift)).extract_first()
+            finalKellyW1 = finalOdd.xpath('td[%s]/span/text()' %(10+shift)).extract_first()
+            finalKellyW0 = finalOdd.xpath('td[%s]/span/text()' %(11+shift)).extract_first()
 
-        if not finalKellyW3:
-            finalKellyW3 = finalOdd.xpath('td[%s]/text()' %(9+shift)).extract_first()
-        if not finalKellyW1:
-            finalKellyW1 = finalOdd.xpath('td[%s]/text()' %(10+shift)).extract_first()
-        if not finalKellyW0:
-            finalKellyW0 = finalOdd.xpath('td[%s]/text()' %(11+shift)).extract_first()
+            finalKellyReg3 = 0
+            finalKellyReg1 = 0
+            finalKellyReg0 = 0
 
-        finalKellyReg3 = calChange(finalKellyW3)
-        finalKellyReg1 = calChange(finalKellyW1)
-        finalKellyReg0 = calChange(finalKellyW0)
+            if not finalKellyW3:
+                finalKellyW3 = finalOdd.xpath('td[%s]/text()' %(9+shift)).extract_first()
+            if not finalKellyW1:
+                finalKellyW1 = finalOdd.xpath('td[%s]/text()' %(10+shift)).extract_first()
+            if not finalKellyW0:
+                finalKellyW0 = finalOdd.xpath('td[%s]/text()' %(11+shift)).extract_first()
 
-        finalKellyW3 = finalKellyW3[0:4]
-        finalKellyW1 = finalKellyW1[0:4]
-        finalKellyW0 = finalKellyW0[0:4]
+            finalKellyReg3 = calChange(finalKellyW3)
+            finalKellyReg1 = calChange(finalKellyW1)
+            finalKellyReg0 = calChange(finalKellyW0)
 
-        finalReturnProb = finalOdd.xpath('td[%s]/text()' %(12+shift)).extract_first()
+            finalKellyW3 = finalKellyW3[0:4]
+            finalKellyW1 = finalKellyW1[0:4]
+            finalKellyW0 = finalKellyW0[0:4]
 
-        oddEndObj = {
-            'hoddNum':tmpHoddNum,
-            'time':finalOddTime,
-            'timeSp':finalOddTimeSp,
-            'odd3':finalOdd3,
-            'odd1':finalOdd1,
-            'odd0':finalOdd0,
-            'reg3':0,
-            'reg1':0,
-            'reg0':0,
-            'prob3':finalProb3,
-            'prob1':finalProb1,
-            'prob0':finalProb0,
-            'kelly3':finalKellyW3,
-            'kelly1':finalKellyW1,
-            'kelly0':finalKellyW0,
-            'kellyReg3':finalKellyReg3,
-            'kellyReg1':finalKellyReg1,
-            'kellyReg0':finalKellyReg0,
-            'returnProb':finalReturnProb
-        }
-        curOddGroup['oddEnd'] = oddEndObj
+            finalReturnProb = finalOdd.xpath('td[%s]/text()' %(12+shift)).extract_first()
 
-        startOdd = oddsTable.xpath('tr[last()]')
+            oddEndObj = {
+                'hoddNum':tmpHoddNum,
+                'time':finalOddTime,
+                'timeSp':finalOddTimeSp,
+                'odd3':finalOdd3,
+                'odd1':finalOdd1,
+                'odd0':finalOdd0,
+                'reg3':0,
+                'reg1':0,
+                'reg0':0,
+                'prob3':finalProb3,
+                'prob1':finalProb1,
+                'prob0':finalProb0,
+                'kelly3':finalKellyW3,
+                'kelly1':finalKellyW1,
+                'kelly0':finalKellyW0,
+                'kellyReg3':finalKellyReg3,
+                'kellyReg1':finalKellyReg1,
+                'kellyReg0':finalKellyReg0,
+                'returnProb':finalReturnProb
+            }
+            curOddGroup['oddEnd'] = oddEndObj
 
-        startOddTime = startOdd.xpath('td[1]/text()').extract_first()
+            startOdd = oddsTable.xpath('tr[last()]')
 
-        startOddTimeSp = exChangeTime(startOdd.xpath('td[2]/text()').extract_first())
+            startOddTime = startOdd.xpath('td[1]/text()').extract_first()
 
-        startOdd3 = startOdd.xpath('td[%s]/text()' %(3+shift)).extract_first()
-        startOdd1 = startOdd.xpath('td[%s]/text()' %(4+shift)).extract_first()
-        startOdd0 = startOdd.xpath('td[%s]/text()' %(5+shift)).extract_first()
+            startOddTimeSp = exChangeTime(startOdd.xpath('td[2]/text()').extract_first())
 
-        startProb3 = startOdd.xpath('td[%s]/text()' %(6+shift)).extract_first()
-        startProb1 = startOdd.xpath('td[%s]/text()' %(7+shift)).extract_first()
-        startProb0 = startOdd.xpath('td[%s]/text()' %(8+shift)).extract_first()
+            startOdd3 = startOdd.xpath('td[%s]/text()' %(3+shift)).extract_first()
+            startOdd1 = startOdd.xpath('td[%s]/text()' %(4+shift)).extract_first()
+            startOdd0 = startOdd.xpath('td[%s]/text()' %(5+shift)).extract_first()
 
-        startKelly3 = startOdd.xpath('td[%s]/text()' %(9+shift)).extract_first()
-        startKelly1 = startOdd.xpath('td[%s]/text()' %(10+shift)).extract_first()
-        startKelly0 = startOdd.xpath('td[%s]/text()' %(11+shift)).extract_first()
+            startProb3 = startOdd.xpath('td[%s]/text()' %(6+shift)).extract_first()
+            startProb1 = startOdd.xpath('td[%s]/text()' %(7+shift)).extract_first()
+            startProb0 = startOdd.xpath('td[%s]/text()' %(8+shift)).extract_first()
 
-        startReturnProb = startOdd.xpath('td[%s]/text()' %(12+shift)).extract_first()
+            startKelly3 = startOdd.xpath('td[%s]/text()' %(9+shift)).extract_first()
+            startKelly1 = startOdd.xpath('td[%s]/text()' %(10+shift)).extract_first()
+            startKelly0 = startOdd.xpath('td[%s]/text()' %(11+shift)).extract_first()
 
-        oddStartObj = {
-            'hoddNum':tmpHoddNum,
-            'time':startOddTime,
-            'timeSp':startOddTimeSp,
-            'odd3':startOdd3,
-            'odd1':startOdd1,
-            'odd0':startOdd0,
-            'reg3':0,
-            'reg1':0,
-            'reg0':0,
-            'prob3':startProb3,
-            'prob1':startProb1,
-            'prob0':startProb0,
-            'kelly3':startKelly3,
-            'kelly1':startKelly1,
-            'kelly0':startKelly0,
-            'kellyReg3':0,
-            'kellyReg1':0,
-            'kellyReg0':0,
-            'returnProb':startReturnProb
-        }
-        curOddGroup['oddStartObj'] = oddStartObj
+            startReturnProb = startOdd.xpath('td[%s]/text()' %(12+shift)).extract_first()
+
+            oddStartObj = {
+                'hoddNum':tmpHoddNum,
+                'time':startOddTime,
+                'timeSp':startOddTimeSp,
+                'odd3':startOdd3,
+                'odd1':startOdd1,
+                'odd0':startOdd0,
+                'reg3':0,
+                'reg1':0,
+                'reg0':0,
+                'prob3':startProb3,
+                'prob1':startProb1,
+                'prob0':startProb0,
+                'kelly3':startKelly3,
+                'kelly1':startKelly1,
+                'kelly0':startKelly0,
+                'kellyReg3':0,
+                'kellyReg1':0,
+                'kellyReg0':0,
+                'returnProb':startReturnProb
+            }
+            curOddGroup['oddStartObj'] = oddStartObj
 
 
-        if isGetDetailOddChange:
-            changeOdds = oddsTable.xpath('tr')
-            oddChangeGroup = []
+            if isGetDetailOddChange:
+                changeOdds = oddsTable.xpath('tr')
+                oddChangeGroup = []
 
-            loopEnd = len(changeOdds)-1+shift
-            for i in range(4+shift,loopEnd):
-                # print('==========one odds group==========')
-                tmpOdd = changeOdds[i]
+                loopEnd = len(changeOdds)-1+shift
+                for i in range(4+shift,loopEnd):
+                    # print('==========one odds group==========')
+                    tmpOdd = changeOdds[i]
 
-                oddTime = tmpOdd.xpath('td[1]/text()').extract_first()
-                oddTimeSp = exChangeTime(tmpOdd.xpath('td[2]/text()').extract_first())
+                    oddTime = tmpOdd.xpath('td[1]/text()').extract_first()
+                    oddTimeSp = exChangeTime(tmpOdd.xpath('td[2]/text()').extract_first())
 
-                odd3 = tmpOdd.xpath('td[%s]/span/text()' %(3+shift)).extract_first()
-                odd1 = tmpOdd.xpath('td[%s]/span/text()' %(4+shift)).extract_first()
-                odd0 = tmpOdd.xpath('td[%s]/span/text()' %(5+shift)).extract_first()
+                    odd3 = tmpOdd.xpath('td[%s]/span/text()' %(3+shift)).extract_first()
+                    odd1 = tmpOdd.xpath('td[%s]/span/text()' %(4+shift)).extract_first()
+                    odd0 = tmpOdd.xpath('td[%s]/span/text()' %(5+shift)).extract_first()
 
-                reg3 = 0
-                reg3 = 0
-                reg0 = 0
+                    reg3 = 0
+                    reg3 = 0
+                    reg0 = 0
 
-                if not odd3:
-                    odd3 = tmpOdd.xpath('td[%s]/text()' %(3+shift)).extract_first()
-                if not odd1:
-                    odd1 = tmpOdd.xpath('td[%s]/text()' %(4+shift)).extract_first()
-                if not odd0:
-                    odd0 = tmpOdd.xpath('td[%s]/text()' %(5+shift)).extract_first()
+                    if not odd3:
+                        odd3 = tmpOdd.xpath('td[%s]/text()' %(3+shift)).extract_first()
+                    if not odd1:
+                        odd1 = tmpOdd.xpath('td[%s]/text()' %(4+shift)).extract_first()
+                    if not odd0:
+                        odd0 = tmpOdd.xpath('td[%s]/text()' %(5+shift)).extract_first()
 
-                reg3 = calChange(odd3)
-                reg1 = calChange(odd1)
-                reg0 = calChange(odd0)
-                odd3 = odd3[0:4]
-                odd1 = odd1[0:4]
-                odd0 = odd0[0:4]
+                    reg3 = calChange(odd3)
+                    reg1 = calChange(odd1)
+                    reg0 = calChange(odd0)
+                    odd3 = odd3[0:4]
+                    odd1 = odd1[0:4]
+                    odd0 = odd0[0:4]
 
-                prob3 = tmpOdd.xpath('td[%s]/text()' %(6+shift)).extract_first()
-                prob1 = tmpOdd.xpath('td[%s]/text()' %(7+shift)).extract_first()
-                prob0 = tmpOdd.xpath('td[%s]/text()' %(8+shift)).extract_first()
+                    prob3 = tmpOdd.xpath('td[%s]/text()' %(6+shift)).extract_first()
+                    prob1 = tmpOdd.xpath('td[%s]/text()' %(7+shift)).extract_first()
+                    prob0 = tmpOdd.xpath('td[%s]/text()' %(8+shift)).extract_first()
 
-                kelly3 = tmpOdd.xpath('td[%s]/text()' %(9+shift)).extract_first()
-                kelly1 = tmpOdd.xpath('td[%s]/text()' %(10+shift)).extract_first()
-                kelly0 = tmpOdd.xpath('td[%s]/text()' %(11+shift)).extract_first()
+                    kelly3 = tmpOdd.xpath('td[%s]/text()' %(9+shift)).extract_first()
+                    kelly1 = tmpOdd.xpath('td[%s]/text()' %(10+shift)).extract_first()
+                    kelly0 = tmpOdd.xpath('td[%s]/text()' %(11+shift)).extract_first()
 
-                kellyChangeW3 = 0
-                kellyChangeW1 = 0
-                kellyChangeW0 = 0
+                    kellyChangeW3 = 0
+                    kellyChangeW1 = 0
+                    kellyChangeW0 = 0
 
-                returnProb = tmpOdd.xpath('td[%s]/text()' %(12+shift)).extract_first()
+                    returnProb = tmpOdd.xpath('td[%s]/text()' %(12+shift)).extract_first()
 
-                oddChangeGroup.append({
-                    'hoddNum':tmpHoddNum,
-                    'time':oddTime,
-                    'timeSp':oddTimeSp,
-                    'odd3':odd3,
-                    'odd1':odd1,
-                    'odd0':odd0,
-                    'reg3':reg3,
-                    'reg1':reg1,
-                    'reg0':reg0,
-                    'prob3':prob3,
-                    'prob1':prob1,
-                    'prob0':prob0,
-                    'kelly3':kelly3,
-                    'kelly1':kelly1,
-                    'kelly0':kelly0,
-                    'kellyReg3':0,
-                    'kellyReg1':0,
-                    'kellyReg0':0,
-                    'returnProb':returnProb
-                })
+                    oddChangeGroup.append({
+                        'hoddNum':tmpHoddNum,
+                        'time':oddTime,
+                        'timeSp':oddTimeSp,
+                        'odd3':odd3,
+                        'odd1':odd1,
+                        'odd0':odd0,
+                        'reg3':reg3,
+                        'reg1':reg1,
+                        'reg0':reg0,
+                        'prob3':prob3,
+                        'prob1':prob1,
+                        'prob0':prob0,
+                        'kelly3':kelly3,
+                        'kelly1':kelly1,
+                        'kelly0':kelly0,
+                        'kellyReg3':0,
+                        'kellyReg1':0,
+                        'kellyReg0':0,
+                        'returnProb':returnProb
+                    })
 
-            curOddGroup['oddChangeGroup'] = oddChangeGroup
-            #mock
-            # odd_group = ''
-            # odd_group = {
-            #
-            # }
+                curOddGroup['oddChangeGroup'] = oddChangeGroup
+                #mock
+                # odd_group = ''
+                # odd_group = {
+                #
+                # }
 
         headers = {
             'User-Agent': USER_AGENT,
@@ -418,22 +432,54 @@ class S2Spider(scrapy.Spider):
             # hoddLadBrokesDetailUrl = 'http://www.okooo.com/soccer/match/%s/hodds/change/%s/?boundary=%s' % (meta['id'], LAD_BROKES, hoddNum)
             oddWilliamHillDetailUrl = 'http://www.okooo.com/soccer/match/%s/odds/change/%s/' % (meta['match']['matchId'], WILLIAM_HILL)
 
-            #取威廉希尔的赔率
-            yield scrapy.Request(url=oddWilliamHillDetailUrl, headers=headers, callback=self.parseOddsDetail, meta=meta)
+            if isGetDetailOddChange:
+                #取威廉希尔的赔率
+                yield scrapy.Request(url=oddWilliamHillDetailUrl, headers=headers, callback=self.parseOddsDetail, meta=meta)
+            else:
+                #无需再取威廉希尔的赔率了
+                meta['odd_w_group'] = True
+
+                url = 'http://www.okooo.com/soccer/match/%s/hodds/change/%s/?boundary=%s' % (meta['match']['matchId'], LAD_BROKES, meta['match']['hoddNum'])
+
+                #取立博的让球赔率
+                yield scrapy.Request(url=url, headers=headers, callback=self.parseOddsDetail, meta=meta)
+
         elif not meta['odd_w_group']:
             # 更新威廉希尔赔率数据到结果中
             # odd_group = 'mock odd_w_group'
             # meta.update({'odd_w_group': odd_group})
-
             meta['odd_w_group'] = True
 
-            if isGetDetailOddChange:
-                meta['match']['oddChangeGroupWillamHill'] = curOddGroup
+            meta['match']['oddChangeGroupWillamHill'] = curOddGroup
 
-            hoddWilliamHillDetailUrl = 'http://www.okooo.com/soccer/match/%s/hodds/change/%s/?boundary=%s' % (meta['match']['matchId'], WILLIAM_HILL, meta['match']['hoddNum'])
+            url = 'http://www.okooo.com/soccer/match/%s/hodds/change/%s/?boundary=%s' % (meta['match']['matchId'], LAD_BROKES, meta['match']['hoddNum'])
 
-            #取威廉希尔的让球赔率
-            yield scrapy.Request(url=hoddWilliamHillDetailUrl, headers=headers, callback=self.parseOddsDetail, meta=meta)
+            #取立博的让球赔率
+            yield scrapy.Request(url=url, headers=headers, callback=self.parseOddsDetail, meta=meta)
+        elif not meta['hodd_l_group']:
+            # 更新立博的让球赔率数据到结果中
+            meta['hodd_l_group'] = True
+            if finalOddTime != None:
+                meta['hodd_w_group'] = True#同时也无需再取威廉希尔的让球赔率了
+
+                if isGetDetailOddChange:
+                    meta['match']['hoddChangeGroupWillamHill'] = None#保证数据格式统一，这个key必须存在
+                    meta['match']['hoddChangeGroupLabBrokes'] = curOddGroup
+
+                meta['match'].update({
+                    'hodd3':finalOdd3,
+                    'hodd1':finalOdd1,
+                    'hodd0':finalOdd0,
+                    'hoddFrom':LAD_BROKES
+                })
+
+                print(meta['match'])
+                resultData.append(meta['match'])
+            else:
+                url = 'http://www.okooo.com/soccer/match/%s/hodds/change/%s/?boundary=%s' % (meta['match']['matchId'], WILLIAM_HILL, meta['match']['hoddNum'])
+
+                #取威廉希尔的让球赔率
+                yield scrapy.Request(url=url, headers=headers, callback=self.parseOddsDetail, meta=meta)
         elif not meta['hodd_w_group']:
             # 更新威廉希尔的让球赔率数据到结果中
             # odd_group = 'mock hodd_w_group'
@@ -442,12 +488,14 @@ class S2Spider(scrapy.Spider):
             meta['hodd_w_group'] = True
 
             if isGetDetailOddChange:
+                meta['match']['hoddChangeGroupLabBrokes'] = None#保证数据格式统一，这个key必须存在
                 meta['match']['hoddChangeGroupWillamHill'] = curOddGroup
 
             meta['match'].update({
-                'hoddWillamHill3':finalOdd3,
-                'hoddWillamHill1':finalOdd1,
-                'hoddWillamHill0':finalOdd0
+                'hodd3':finalOdd3,
+                'hodd1':finalOdd1,
+                'hodd0':finalOdd0,
+                'hoddFrom':WILLIAM_HILL
             })
             # print(meta)
             print(meta['match'])
