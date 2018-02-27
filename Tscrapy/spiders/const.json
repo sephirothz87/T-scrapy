@@ -1,0 +1,18 @@
+{
+    "LEAGUE":{
+        "ENGLAND_PREMIER_LEAGUE":{
+            "code":17,
+            "name":"英超",
+            "match_per_turn":10,
+            "season_codes":{
+                "17-18":13222,
+                "16-17":12651
+            },
+            "round":38
+        }
+    },
+    "BET_COMPANY":{
+        "WILLIAM_HILL":{"code":14},
+        "LAD_BROKES":{"code":82}
+    }
+}
